@@ -7,6 +7,10 @@ import pandas as pd
 from sklearn.naive_bayes import GaussianNB 
 # Preprocessing untuk mengubah kata menjadi angka
 from sklearn import preprocessing
+# Untuk operasi fungsi matematika.
+import numpy as np
+# Visualisasi Grafik
+import matplotlib.pyplot as plt
 
 # Konfigurasi Halaman Streamlit
 st.set_page_config(page_title="Tugas Naive Bayes", layout="centered")
@@ -53,15 +57,9 @@ target = df_encoded['Kesuksesan']
 model = GaussianNB()
 model.fit(features, target)
 
-# 6. Menampilkan Informasi Model
-st.subheader("2. Informasi Model")
-st.write("Model berhasil dilatih menggunakan algoritma **Gaussian Naïve Bayes**.")
-st.write(f"Jumlah data latih: {len(df)} baris.")
-st.write("---")
-
-# --- INTERAKSI PENGGUNA (PREDIKSI) ---
-st.subheader("3. Coba Prediksi")
-st.info("Pilih atribut di bawah ini untuk melihat hasil prediksi sistem.")
+# 6. Interaksi Pengguna
+st.subheader("2. Simulasi Prediksi")
+st.info("Masukkan strategi pemasaran baru untuk melihat prediksi peluangnya.")
 
 col1, col2 = st.columns(2)
 
@@ -70,23 +68,55 @@ with col1:
 with col2:
     input_harga = st.selectbox("Pilih Level Harga", df['Harga'].unique())
 
-if st.button("🔍 Prediksi Kesuksesan"):
+if st.button("🔍 Hitung Prediksi"):
+    st.write("---")
+    st.subheader("3. Hasil Analisa Perhitungan")
+    
     # Ubah input user jadi angka
     iklan_kode = le_iklan.transform([input_iklan])[0]
     harga_kode = le_harga.transform([input_harga])[0]
     
-    # Lakukan prediksi
+    # Lakukan prediksi kelas (Hasil Akhir)
     prediksi_angka = model.predict([[iklan_kode, harga_kode]])[0]
-    
-    # Kembalikan angka ke kata (inverse transform)
     prediksi_teks = le_kesuksesan.inverse_transform([prediksi_angka])[0]
     
-    # Hitung probabilitas (keyakinan model)
-    proba = model.predict_proba([[iklan_kode, harga_kode]])
-    confidence = max(proba[0]) * 100
+    # --- BAGIAN INI MENAMPILKAN PROSES PERHITUNGAN ---
+    # Ambil probabilitas untuk setiap kelas (Berhasil vs Tidak Berhasil)
+    proba = model.predict_proba([[iklan_kode, harga_kode]])[0]
+    kelas = le_kesuksesan.classes_
     
-    # Tampilkan Hasil
-    if prediksi_teks == 'Berhasil':
-        st.success(f"Hasil Prediksi: **{prediksi_teks}** (Tingkat Keyakinan: {confidence:.2f}%)")
-    else:
-        st.error(f"Hasil Prediksi: **{prediksi_teks}** (Tingkat Keyakinan: {confidence:.2f}%)")
+    # Tampilkan detail perhitungan probabilitas
+    st.write("Sistem menghitung probabilitas (Posterior Probability) untuk setiap kemungkinan:")
+    
+    c1, c2 = st.columns(2)
+    
+    # Menampilkan Probabilitas Kelas Pertama
+    with c1:
+        st.metric(
+            label=f"Peluang {kelas[0]}", 
+            value=f"{proba[0]*100:.2f}%"
+        )
+    
+    # Menampilkan Probabilitas Kelas Kedua
+    with c2:
+        st.metric(
+            label=f"Peluang {kelas[1]}", 
+            value=f"{proba[1]*100:.2f}%"
+        )
+    
+    # Visualisasi Grafik Batang Sederhana
+    fig, ax = plt.subplots(figsize=(6, 2))
+    bars = ax.barh(kelas, proba, color=['#4CAF50', '#F44336'])
+    ax.set_xlim(0, 1)
+    ax.set_xlabel("Probabilitas")
+    
+    # Tambahkan label angka di grafik
+    for bar in bars:
+        width = bar.get_width()
+        ax.text(width + 0.01, bar.get_y() + bar.get_height()/2, 
+                f'{width*100:.1f}%', va='center')
+        
+    st.pyplot(fig)
+    
+    # Kesimpulan Akhir
+    st.success(f"**Kesimpulan:** Berdasarkan nilai probabilitas tertinggi, sistem memprediksi hasil: **{prediksi_teks}**")
