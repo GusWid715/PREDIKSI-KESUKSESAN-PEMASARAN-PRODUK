@@ -8,6 +8,13 @@ from sklearn.naive_bayes import GaussianNB
 # Preprocessing untuk mengubah kata menjadi angka
 from sklearn import preprocessing
 
+# Konfigurasi Halaman Streamlit
+st.set_page_config(page_title="Tugas Naive Bayes", layout="centered")
+st.title("Prediksi Kesuksesan Pemasaran Dengan Naïve Bayes")
+st.write("Kelompok x - Pemodelan dan Simulasi")
+st.write("---")
+
+
 # 2. Menyiapkan Data 
 data = {
     'Iklan': ['Ya', 'Tidak', 'Ya', 'Tidak'],
@@ -51,3 +58,35 @@ st.subheader("2. Informasi Model")
 st.write("Model berhasil dilatih menggunakan algoritma **Gaussian Naïve Bayes**.")
 st.write(f"Jumlah data latih: {len(df)} baris.")
 st.write("---")
+
+# --- INTERAKSI PENGGUNA (PREDIKSI) ---
+st.subheader("3. Coba Prediksi")
+st.info("Pilih atribut di bawah ini untuk melihat hasil prediksi sistem.")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    input_iklan = st.selectbox("Apakah Melakukan Iklan?", df['Iklan'].unique())
+with col2:
+    input_harga = st.selectbox("Pilih Level Harga", df['Harga'].unique())
+
+if st.button("🔍 Prediksi Kesuksesan"):
+    # Ubah input user jadi angka
+    iklan_kode = le_iklan.transform([input_iklan])[0]
+    harga_kode = le_harga.transform([input_harga])[0]
+    
+    # Lakukan prediksi
+    prediksi_angka = model.predict([[iklan_kode, harga_kode]])[0]
+    
+    # Kembalikan angka ke kata (inverse transform)
+    prediksi_teks = le_kesuksesan.inverse_transform([prediksi_angka])[0]
+    
+    # Hitung probabilitas (keyakinan model)
+    proba = model.predict_proba([[iklan_kode, harga_kode]])
+    confidence = max(proba[0]) * 100
+    
+    # Tampilkan Hasil
+    if prediksi_teks == 'Berhasil':
+        st.success(f"Hasil Prediksi: **{prediksi_teks}** (Tingkat Keyakinan: {confidence:.2f}%)")
+    else:
+        st.error(f"Hasil Prediksi: **{prediksi_teks}** (Tingkat Keyakinan: {confidence:.2f}%)")
