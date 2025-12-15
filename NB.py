@@ -34,3 +34,20 @@ df_encoded = df.copy()
 df_encoded['Iklan'] = le_iklan.fit_transform(df['Iklan'])
 df_encoded['Harga'] = le_harga.fit_transform(df['Harga'])
 df_encoded['Kesuksesan'] = le_kesuksesan.fit_transform(df['Kesuksesan'])
+
+# 4. Memisahkan Data
+# Fitur: Data penentu (Iklan, Harga)
+features = df_encoded[['Iklan', 'Harga']]
+# Target: Hasil yang dicari (Kesuksesan)
+target = df_encoded['Kesuksesan']
+
+# 5. Membuat Model Naive Bayes
+# Menggunakan GaussianNB sesuai standar klasifikasi Naive Bayes
+model = GaussianNB()
+model.fit(features, target)
+
+# 6. Menampilkan Informasi Model
+st.subheader("2. Informasi Model")
+st.write("Model berhasil dilatih menggunakan algoritma **Gaussian Naïve Bayes**.")
+st.write(f"Jumlah data latih: {len(df)} baris.")
+st.write("---")
